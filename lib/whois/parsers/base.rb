@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -45,7 +45,7 @@ module Whois
       #   # => :supported
       #
       def self.property_state(property)
-        _properties[property]
+        self._properties[property]
       end
 
       # Check if the +property+ passed as symbol
@@ -66,9 +66,9 @@ module Whois
       #
       def self.property_state?(property, status = :any)
         if status == :any
-          _properties.key?(property)
+          self._properties.key?(property)
         else
-          _properties[property] == status
+          self._properties[property] == status
         end
       end
 
@@ -80,7 +80,7 @@ module Whois
       # @return [void]
       #
       def self.property_register(property, status)
-        self._properties = _properties.merge({ property => status })
+        self._properties = self._properties.merge({ property => status })
       end
 
 
@@ -171,7 +171,6 @@ module Whois
       #
       def self.parse_time(timestamp)
         return unless timestamp.is_a?(String) && !timestamp.empty?
-
         Time.parse(timestamp).change(usec: 0)
       rescue ArgumentError
         nil
@@ -206,7 +205,7 @@ module Whois
       #
       # @return [String] The part body.
       def content
-        part.body
+        part.body.encode!("UTF-8", invalid: :replace, undef: :replace)
       end
 
       # Check if the parser respond to +symbol+
@@ -339,7 +338,7 @@ module Whois
       # Checks whether this response contains a message
       # that can be reconducted to a "WHOIS Server Unavailable" status.
       #
-      # Some WHOIS servers returns error messages
+      # Some WHOIS servers returns error messages 
       # when they are experiencing failures.
       #
       # @return [Boolean]

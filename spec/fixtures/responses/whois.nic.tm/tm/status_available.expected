@@ -25,8 +25,8 @@
 #updated_on
   %s %ERROR{AttributeNotSupported}
 
-#expires_on
-  %s == nil
+#created_on
+  %s %ERROR{AttributeNotSupported}
 
 
 #registrar
@@ -44,5 +44,4 @@
 
 
 #nameservers
-  %s %CLASS{array}
-  %s == []
+  %s %ERROR{AttributeNotSupported}

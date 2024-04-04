@@ -175,8 +175,7 @@ module Whois
 
       def respond_to_question_method?(symbol)
         return false unless symbol.to_s =~ /([a-z_]+)\?/
-
-        symbol = ::Regexp.last_match(1).to_sym
+        symbol = $1.to_sym
         Parser::PROPERTIES.include?(symbol) ||
             Parser::METHODS.include?(symbol)
       end
@@ -189,8 +188,8 @@ module Whois
         elsif Parser::METHODS.include?(method)
           self.class.define_method_method(method)
           send(method, *args, &block)
-        elsif method.to_s =~ /([a-z_]+)\?/ and (Parser::PROPERTIES + Parser::METHODS).include?(::Regexp.last_match(1).to_sym)
-          self.class.define_question_method(::Regexp.last_match(1))
+        elsif method.to_s =~ /([a-z_]+)\?/ and (Parser::PROPERTIES + Parser::METHODS).include?($1.to_sym)
+          self.class.define_question_method($1)
           send(method)
         else
           super

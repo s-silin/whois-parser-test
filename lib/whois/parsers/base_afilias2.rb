@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -104,10 +104,10 @@ module Whois
 
       def build_contact(element, type)
         node("#{element} ID") do
-          address = ["", "1", "2", "3"]
-                    .map { |i| node("#{element} Street#{i}") }
-                    .delete_if { |i| i.nil? || i.empty? }
-                    .join("\n")
+          address = ["", "1", "2", "3"].
+              map { |i| node("#{element} Street#{i}") }.
+              delete_if { |i| i.nil? || i.empty? }.
+              join("\n")
 
           Parser::Contact.new(
               :type         => type,
@@ -128,7 +128,7 @@ module Whois
 
       def decompose_registrar(value)
         if value =~ /(.+?) \((.+?)\)/
-          [::Regexp.last_match(2), ::Regexp.last_match(1)]
+          [$2, $1]
         else
           [nil, value]
         end

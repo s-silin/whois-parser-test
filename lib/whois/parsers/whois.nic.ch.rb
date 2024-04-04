@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -59,7 +59,7 @@ module Whois
       #
       property_supported :registrant_contacts do
         if content_for_scanner =~ /Holder of domain name:\n(.+?)\n(.+?)\nContractual Language:.*\n\n/m
-          Parser::Contact.new({ :name => ::Regexp.last_match(1), :address => ::Regexp.last_match(2), :type => Parser::Contact::TYPE_REGISTRANT })
+          Parser::Contact.new({ :name => $1, :address => $2, :type => Parser::Contact::TYPE_REGISTRANT })
         end
       end
 
@@ -73,7 +73,7 @@ module Whois
       #
       property_supported :technical_contacts do
         if content_for_scanner =~ /Technical contact:\n(.+?)\n(.+?)\n\n/m
-          Parser::Contact.new({ :name => ::Regexp.last_match(1), :address => ::Regexp.last_match(2), :type => Parser::Contact::TYPE_TECHNICAL })
+          Parser::Contact.new({ :name => $1, :address => $2, :type => Parser::Contact::TYPE_TECHNICAL })
         end
       end
 
@@ -88,9 +88,9 @@ module Whois
         if content_for_scanner =~ /Name servers:\n((.+\n)+)(?:\n|\z)/
           list  = {}
           order = []
-          ::Regexp.last_match(1).split("\n").map do |line|
+          $1.split("\n").map do |line|
             if line =~ /(.+)\t\[(.+)\]/
-              name, ip = ::Regexp.last_match(1), ::Regexp.last_match(2)
+              name, ip = $1, $2
               order << name unless order.include?(name)
               list[name] ||= Parser::Nameserver.new(:name => name)
               list[name].ipv4 = ip if Whois::Server.send(:valid_ipv4?, ip)
@@ -101,6 +101,12 @@ module Whois
             end
           end
           order.map { |name| list[name] }
+        end
+      end
+
+      property_supported :registrar do
+        if content_for_scanner =~ /Registrar:\n(.+?)\n\n/m
+          Parser::Registrar.new(name: $1)
         end
       end
     end

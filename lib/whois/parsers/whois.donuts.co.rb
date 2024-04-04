@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -21,7 +21,7 @@ module Whois
     class WhoisDonutsCo < BaseIcannCompliant
 
       self.scanner = Scanners::BaseIcannCompliant, {
-          pattern_available: /^Domain not found\./,
+          pattern_available: /^Domain not found\./
       }
 
 
@@ -34,7 +34,6 @@ module Whois
 
       property_supported :registrar do
         return unless node("Registrar")
-
         Parser::Registrar.new({
             id:           node("Registrar IANA ID"),
             name:         node("Registrar"),
@@ -44,7 +43,7 @@ module Whois
       end
 
 
-
+      private
       #
       # def build_contact(element, type)
       #   if (contact = super)

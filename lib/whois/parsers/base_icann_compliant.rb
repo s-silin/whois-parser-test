@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -64,34 +64,35 @@ module Whois
       end
 
       property_supported :expires_on do
-        node("Registrar Registration Expiration Date") do |value|
-          parse_time(value)
-        end
-      end
+        key = ["Registry Expiry Date", "Registrar Registration Expiration Date"]
+          .find { |k| node?(k) }
 
+        node(key) { |value| parse_time(value) }
+      end
 
       property_supported :registrar do
         return unless node("Registrar")
-
         Parser::Registrar.new({
             id:           node("Registrar IANA ID"),
             name:         node("Registrar"),
             organization: node("Registrar"),
             url:          node("Registrar URL"),
+            email:        node("Registrar Abuse Contact Email"),
+            phone:        node("Registrar Abuse Contact Phone")
         })
       end
 
 
       property_supported :registrant_contacts do
-        build_contact("Registrant", Parser::Contact::TYPE_REGISTRANT)
+        build_contact('Registrant', Parser::Contact::TYPE_REGISTRANT)
       end
 
       property_supported :admin_contacts do
-        build_contact("Admin", Parser::Contact::TYPE_ADMINISTRATIVE)
+        build_contact('Admin', Parser::Contact::TYPE_ADMINISTRATIVE)
       end
 
       property_supported :technical_contacts do
-        build_contact("Tech", Parser::Contact::TYPE_TECHNICAL)
+        build_contact('Tech', Parser::Contact::TYPE_TECHNICAL)
       end
 
 
@@ -137,7 +138,7 @@ module Whois
       def value_for_phone_property(element, property)
         [
           value_for_property(element, "#{property}"),
-          value_for_property(element, "#{property} Ext"),
+          value_for_property(element, "#{property} Ext")
         ].reject(&:empty?).join(' ext: ')
       end
 

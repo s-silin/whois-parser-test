@@ -37,7 +37,7 @@ module Whois
       end
 
       tokenizer :skip_blank_line do
-        @input.skip(/^\s*\n/)
+        @input.skip(/^[\s]*\n/)
       end
 
       tokenizer :skip_newline do
@@ -45,10 +45,10 @@ module Whois
       end
 
       # Scan a key/value pair and stores the result in the current target.
-      #  target is the global @ast if no '_section' is set, else '_section' is used.
+      # target is the global @ast if no '_section' is set, else '_section' is used.
       tokenizer :scan_keyvalue do
         if @input.scan(/(.+?):(.*?)(\n|\z)/)
-          key, value = @input[1].strip, @input[2].strip
+          key, value = @input[1].strip, remove_gdpr_message(@input[2].strip)
           target = @tmp['_section'] ? (@ast[@tmp['_section']] ||= {}) : @ast
 
           if target[key].nil?
@@ -60,7 +60,11 @@ module Whois
         end
       end
 
-      protected
+      tokenizer :skip_gdpr_message do
+        @input.skip(/^Please query the RDDS.+\n?|^The Registrar of Record.+\n?/)
+      end
+
+    protected
 
       def _scan_lines_to_array(pattern)
         results = []
@@ -73,7 +77,9 @@ module Whois
 
       def _scan_lines_to_hash(pattern)
         results = {}
-        results.merge! @input[1].strip => @input[2].strip while @input.scan(pattern)
+        while @input.scan(pattern)
+          results.merge! @input[1].strip => @input[2].strip
+        end
         results
       end
 
@@ -100,6 +106,10 @@ module Whois
         unexpected_token
       end
 
+      def remove_gdpr_message(str)
+        str.gsub(/Please query the RDDS.+|The Registrar of Record.+/, '')
+      end
+
       def unexpected_token
         error!("Unexpected token")
       end
@@ -107,6 +117,7 @@ module Whois
       def error!(message)
         raise ParserError, "#{message}: #{@input.peek(@input.string.length)}"
       end
+
 
     end
 

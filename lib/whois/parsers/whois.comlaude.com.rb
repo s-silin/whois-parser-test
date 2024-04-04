@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -34,7 +34,7 @@ module Whois
 
       property_supported :created_on do
         if content_for_scanner =~ /Registered: (.+)\n/
-          parse_time(::Regexp.last_match(1))
+          parse_time($1)
         end
       end
 
@@ -42,7 +42,7 @@ module Whois
 
       property_supported :expires_on do
         if content_for_scanner =~ /Expires: (.+)\n/
-          parse_time(::Regexp.last_match(1))
+          parse_time($1)
         end
       end
 
@@ -69,7 +69,7 @@ module Whois
 
       property_supported :nameservers do
         if content_for_scanner =~ /Nameservers:\n((?:\s*[^\s\n]+\n)+)\n/
-          ::Regexp.last_match(1).split("\n").map do |line|
+          $1.split("\n").map do |line|
             Parser::Nameserver.new(:name => line.strip)
           end
         end
@@ -86,11 +86,11 @@ module Whois
 
         # 0 Domain Manager
         # 1 Nom-IQ Ltd dba Com Laude
-        #   28-30 Little Russell Street
+        #   2nd Floor, 28-30 Little Russell Street
         #   London WC1A 2HN
         #   United Kingdom
-        #   Phone: +44.2074218250
-        #   Fax: +44.8700118187
+        #   Phone: +44.2078360070
+        #   Fax: +44.2078360070
         #   Email: admin@comlaude.com
         Parser::Contact.new(
           :type         => type,
@@ -103,7 +103,7 @@ module Whois
           :country      => nil,
           :phone        => match.slice(/Phone: (.*)/, 1),
           :email        => match.slice(/Email: (.*)/, 1),
-          :fax          => match.slice(/Fax: (.*)/, 1)
+          :fax          => match.slice(/Fax: (.*)/, 1),
         )
       end
 

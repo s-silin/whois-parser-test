@@ -19,13 +19,47 @@ end
 
 d = ARGV.shift || raise("Missing domain")
 n = ARGV.shift || raise("Missing file name")
+h = ARGV.shift
 
-r = Whois.lookup(d)
+r = Whois::Client.new(host: h).lookup(d)
 tld = r.server.allocation
 
+def classify(string)
+  string.split('/').collect do |c|
+    c.split(/_|\.|-/).collect(&:capitalize).join
+  end.join('::')
+end
+
 r.parts.each do |part|
+  next if part.host == 'whois.verisign-grs.com'
+
   target = File.expand_path("../../spec/fixtures/responses/#{part.host}/#{tld}/#{n}.txt", __FILE__)
   FileUtils.mkdir_p(File.dirname(target))
   File.open(target, "w+") { |f| f.write(part.body) }
-  puts "#{target}"
+  puts "Response: #{target}"
+
+  target = File.expand_path("../../lib/whois/parsers/#{part.host}.rb", __FILE__)
+  text = <<~EOF
+require_relative 'base_icann_compliant'
+module Whois
+  class Parsers
+    class #{classify(part.host)} < BaseIcannCompliant
+      self.scanner = Scanners::BaseIcannCompliant, {
+        pattern_available: /^Domain not found/
+      # pattern_disclaimer: /^Access to/,
+      # pattern_throttled: /^WHOIS LIMIT EXCEEDED/,
+      }
+    end
+  end
 end
+  EOF
+  File.open(target, "w+") { |f| f.write(text) }
+  puts "Parser File: #{target}"
+end
+
+# results = {}
+# CSV.foreach('./utils/whoisservertodo_with_domain.csv', :headers => true) do |row|
+#   results[row['host']] ||= { domains: [], count: 0 }
+#   results[row['host']][:domains] << row['domain']
+#   results[row['host']][:count] += 1
+# end

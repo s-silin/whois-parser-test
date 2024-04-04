@@ -31,10 +31,10 @@ module Whois
       end
 
       tokenizer :scan_disclaimer do
-        if @input.match?(/% Copyright \(c\) *\d{4} by DENIC\n/)
+        if @input.match?(/% Restricted rights./)
           @input.scan_until(/% Terms and Conditions of Use\n/)
           lines = []
-          while @input.match?(/%/) && @input.scan(/%(.*)\n/) # rubocop:disable Style/WhileUntilModifier
+          while @input.match?(/%/) && @input.scan(/%(.*)\n/)
             lines << @input[1].strip unless @input[1].strip == ""
           end
           @ast["Disclaimer"] = lines.join(" ")
@@ -65,7 +65,7 @@ module Whois
             "fax" => contact['Fax'],
             "email" => contact['Email'],
             "created_on" => nil,
-            "updated_on" => contact['Changed'],
+            "updated_on" => contact['Changed']
           }
         end
       end
@@ -78,7 +78,7 @@ module Whois
       private
 
       def parse_pair(store)
-        if @input.scan(/([^ \[]*):(.*)\n/)
+        if @input.scan(/([^  \[]*):(.*)\n/)
           key, value = @input[1].strip, @input[2].strip
           if store[key].nil?
             store[key] = value

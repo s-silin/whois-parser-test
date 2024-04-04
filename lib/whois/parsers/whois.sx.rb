@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -41,11 +41,11 @@ module Whois
 
       property_supported :status do
         case (s = node("Domain Status", &:downcase))
-        when "available"
+        when /^available/
           :available
-        when "ok"
+        when /^ok/
           :registered
-        when "premium name"
+        when /^premium name/
           :unavailable
         else
           Whois::Parser.bug!(ParserError, "Unknown status `#{s}'.")
@@ -113,7 +113,7 @@ module Whois
               :name         => node("#{element} Name"),
               :organization => node("#{element} Organization"),
               :address      => node("#{element} Street"),
-              :city => node("#{element} City"),
+              :city        => node("#{element} City"),
               :zip          => node("#{element} Postal Code"),
               :country      => node("#{element} Country"),
               :email        => node("#{element} Email")

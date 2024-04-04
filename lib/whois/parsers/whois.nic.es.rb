@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -22,7 +22,7 @@ module Whois
 
       property_supported :domain do
         if content_for_scanner =~ /Domain Name:\s+(.+)\n/
-          ::Regexp.last_match(1).downcase
+          $1.downcase
         end
       end
 
@@ -48,7 +48,7 @@ module Whois
 
       property_supported :created_on do
         if content_for_scanner =~ /Creation Date:\s+(.+)\n/
-          parse_time(::Regexp.last_match(1))
+          parse_time($1)
         end
       end
 
@@ -56,7 +56,7 @@ module Whois
 
       property_supported :expires_on do
         if content_for_scanner =~ /Expiration Date:\s+(.+)\n/
-          parse_time(::Regexp.last_match(1))
+          parse_time($1)
         end
       end
 
@@ -64,7 +64,7 @@ module Whois
       property_supported :registrar do
         Parser::Registrar.new(
             :name         => 'ES-NIC',
-            :organization => 'ES-NIC Delegated Internet Registry for Spain'
+            :organization => 'ES-NIC Delegated Internet Registry for Spain',
         )
       end
 
@@ -74,7 +74,7 @@ module Whois
           Parser::Contact.new(
               type:         Parser::Contact::TYPE_REGISTRANT,
               id:           nil,
-              name:         ::Regexp.last_match(1).to_s.strip,
+              name:         $1.to_s.strip,
               organization: nil,
               address:      nil,
               city:         nil,

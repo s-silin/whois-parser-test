@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -25,19 +25,12 @@ module Whois
     class KeroYachayPe < Base
 
       property_supported :status do
-        if content_for_scanner =~ /Status:\s+(.+?)\n/
-          case ::Regexp.last_match(1).downcase
-          when "active"
-            :registered
-          # NEWSTATUS suspended (https://github.com/weppos/whois/issues/5)
-          when "suspended"
-            :registered
-          when "not registered"
+        if content_for_scanner =~ /Domain Status:\s+(.+?)\n/
+          case $1.downcase
+          when "no object found"
             :available
-          when "inactive"
-            :inactive
           else
-            Whois::Parser.bug!(ParserError, "Unknown status `#{::Regexp.last_match(1)}'.")
+            :registered
           end
         else
           Whois::Parser.bug!(ParserError, "Unable to parse status.")
@@ -61,13 +54,22 @@ module Whois
 
 
       property_supported :nameservers do
-        if content_for_scanner =~ /Name Servers:\n((.+\n)+)\n/
-          ::Regexp.last_match(1).split("\n").map do |name|
-            Parser::Nameserver.new(:name => name.strip)
-          end
+        content_for_scanner.scan(/Name Server:\s*(.+?)\n/).flatten.map do |name|
+          Parser::Nameserver.new(:name => name.strip)
         end
       end
 
+      property_supported :admin_contacts do
+        Parser::Contact.new(
+          type:         Parser::Contact::TYPE_ADMINISTRATIVE,
+          name:         content_for_scanner[/Admin Name:\s+(.+)\n/, 1],
+          email:        content_for_scanner[/Admin Email:\s+(.+)\n/, 1]
+        )
+      end
+
+      property_not_supported :registrant_contacts
+      property_not_supported :technical_contacts
+      property_not_supported :registrar
 
       # Checks whether the response has been throttled.
       #

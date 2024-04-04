@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -38,10 +38,15 @@ module Whois
         !available?
       end
 
+      property_supported :registrar do
+        if content_for_scanner =~ /^\s*Registrar:\s+(.*)\n/
+          Parser::Registrar.new(name: $1)
+        end
+      end
 
       property_supported :created_on do
         if content_for_scanner =~ /^\s+Creation Date:\s+(.*)\n/
-          parse_time(::Regexp.last_match(1))
+          parse_time($1)
         end
       end
 
@@ -49,31 +54,43 @@ module Whois
 
       property_supported :expires_on do
         if content_for_scanner =~ /^\s+Expiration Date:\s+(.*)\n/
-          parse_time(::Regexp.last_match(1))
+          parse_time($1)
         end
+      end
+
+      property_supported :registrant_contacts do
+        build_contact("Registrant", Parser::Contact::TYPE_REGISTRANT)
+      end
+
+      property_supported :admin_contacts do
+        build_contact("Administrative Contact", Parser::Contact::TYPE_ADMINISTRATIVE)
+      end
+
+      property_supported :technical_contacts do
+        build_contact("Technical Contact", Parser::Contact::TYPE_TECHNICAL)
       end
 
 
       property_supported :nameservers do
         if content_for_scanner =~ /Name Servers:\n((.+\n)+)\n/
-          values = case value = ::Regexp.last_match(1).downcase
-                   # schema-1
-                   when /^(?:\s+([\w.-]+)\n){2,}/
-                     value.scan(/\s+([\w.-]+)\n/).map do |match|
-                       { :name => match[0] }
-                     end
-                   when /^(?:\s+([\w.-]+)\s+\((.+)\)\n){2,}/
-                     value.scan(/\s+([\w.-]+)\s+\((.+)\)\n/).map do |match|
-                       { :name => match[0], :ipv4 => match[1] }
-                     end
-                   # schema-2
-                   when /^(?:\s+([\w.-]+)){2,}/
-                     value.strip.split(/\s+/).map do |name|
-                       { :name => name }
-                     end
-                   else
-                     Whois::Parser.bug!(ParserError, "Unknown nameservers format `#{value}'")
-                   end
+          values = case value = $1.downcase
+          # schema-1
+          when /^(?:\s+([\w.-]+)\n){2,}/
+            value.scan(/\s+([\w.-]+)\n/).map do |match|
+              { :name => match[0] }
+            end
+          when /^(?:\s+([\w.-]+)\s+\((.+)\)\n){2,}/
+            value.scan(/\s+([\w.-]+)\s+\((.+)\)\n/).map do |match|
+              { :name => match[0], :ipv4 => match[1] }
+            end
+          # schema-2
+          when /^(?:\s+([\w.-]+)){2,}/
+            value.strip.split(/\s+/).map do |name|
+              { :name => name }
+            end
+          else
+            Whois::Parser.bug!(ParserError, "Unknown nameservers format `#{value}'")
+          end
 
           values.map do |params|
             Parser::Nameserver.new(params)
@@ -81,7 +98,20 @@ module Whois
         end
       end
 
-    end
+      def build_contact(element, type)
+        if content_for_scanner =~ /#{element}:\n\s*\n((\s+\S+:\s+[^\n]+\n)+)/
+          pairs = $1
+            .split("\n")
+            .map { |l| l.split(':', 2).map(&:strip).map(&:downcase) }
+            .to_h
 
+          Parser::Contact.new(
+            :type         => type,
+            :name         => pairs['name'],
+            :email        => pairs['email']
+          )
+        end
+      end
+    end
   end
 end

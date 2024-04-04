@@ -28,7 +28,6 @@ module Whois
     # @api private
     def self.define_question_method(method)
       return if method.to_s.end_with?("?")
-
       class_eval <<-RUBY, __FILE__, __LINE__ + 1
         def #{method}?
           !#{method}.nil?
@@ -55,7 +54,7 @@ module Whois
       @record = record
     end
 
-    alias target record
+    alias_method :target, :record
 
 
     # Checks if this class respond to given method.

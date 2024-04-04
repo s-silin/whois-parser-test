@@ -3,10 +3,10 @@
 
 
 #domain
-  %s == nil
+  %s == "u34jedzcq.io"
 
 #domain_id
-  %s == nil
+  %s %ERROR{AttributeNotSupported}
 
 
 #status
@@ -20,17 +20,17 @@
 
 
 #created_on
-  %s == nil
+  %s %ERROR{AttributeNotSupported}
 
 #updated_on
-  %s == nil
+  %s %ERROR{AttributeNotSupported}
 
 #expires_on
   %s == nil
 
 
 #registrar
-  %s == nil
+  %s %ERROR{AttributeNotSupported}
 
 #registrant_contacts
   %s %CLASS{array}

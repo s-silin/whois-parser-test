@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -39,10 +39,8 @@ module Whois
         case
         when list.include?("no object found")
           :available
-        when list.include?("ok")
-          :registered
         else
-          Whois::Parser.bug!(ParserError, "Unknown status `#{list.join(', ')}'.")
+          :registered
         end
       end
 
@@ -67,17 +65,29 @@ module Whois
         node("Registry Expiry Date") { |value| parse_time(value) }
       end
 
-
       property_supported :registrar do
-        if node("Sponsoring Registrar")
+        if name = node("Registrar").presence || node("Sponsoring Registrar").presence
           Parser::Registrar.new(
-              id:           node("Sponsoring Registrar IANA ID").presence,
-              name:         node("Sponsoring Registrar"),
-              url:          node("Sponsoring Registrar URL").presence
+            id:    node('Sponsoring Registrar IANA ID').presence,
+            name:  name,
+            url:   node('Registrar URL').presence || node('Sponsoring Registrar URL').presence,
+            email: node('Registrar Abuse Email'),
+            phone: node('Registrar Abuse Phone')
           )
         end
       end
 
+      property_supported :registrant_contacts do
+        build_contact('Registrant', Parser::Contact::TYPE_REGISTRANT)
+      end
+
+      property_supported :admin_contacts do
+        build_contact('Admin', Parser::Contact::TYPE_ADMINISTRATIVE)
+      end
+
+      property_supported :technical_contacts do
+        build_contact('Tech', Parser::Contact::TYPE_TECHNICAL)
+      end
 
       property_supported :nameservers do
         Array.wrap(node("Name Server")).map do |name|
@@ -85,7 +95,26 @@ module Whois
         end
       end
 
-    end
+      protected
 
+      def build_contact(element, type)
+        node("#{element} Name") do
+          Parser::Contact.new(
+              type:         type,
+              id:           node("#{element} ID").presence,
+              name:         node("#{element} Name"),
+              organization: node("#{element} Organization"),
+              address:      node("#{element} Street"),
+              city:         node("#{element} City"),
+              zip:          node("#{element} Postal Code"),
+              state:        node("#{element} State/Province"),
+              country_code: node("#{element} Country"),
+              phone:        node("#{element} Phone"),
+              fax:          node("#{element} Fax"),
+              email:        node("#{element} Email")
+          )
+        end
+      end
+    end
   end
 end

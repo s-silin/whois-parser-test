@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -39,22 +39,21 @@ module Whois
 
       property_supported :created_on do
         if content_for_scanner =~ /Created On: (.+)\n/
-          parse_time(::Regexp.last_match(1))
+          parse_time($1)
         end
       end
 
       property_supported :updated_on do
         if content_for_scanner =~ /Updated On: (.+)\n/
-          parse_time(::Regexp.last_match(1))
+          parse_time($1)
         end
       end
 
       property_supported :expires_on do
         if content_for_scanner =~ /Expires On: (.+)\n/
-          parse_time(::Regexp.last_match(1))
+          parse_time($1)
         end
       end
-
 
       property_supported :nameservers do
         content_for_scanner.scan(/Name Server:\s+(.+)\n/).flatten.map do |name|
@@ -62,7 +61,19 @@ module Whois
         end
       end
 
-    end
+      property_supported :registrar do
+        Parser::Registrar.new({
+          id:           content_for_scanner[/Registrar IANA ID:\s+(.+)\n/, 1],
+          name:         content_for_scanner[/Registrar:\s+(.+)\n/, 1],
+          organization: content_for_scanner[/Registrar:\s+(.+)\n/, 1],
+          email:        content_for_scanner[/Registrar Abuse Contact Email:\s+(.+)\n/, 1],
+          phone:        content_for_scanner[/Registrar Abuse Contact Phone:\s+(.+)\n/, 1],
+        })
+      end
 
+      property_not_supported :registrant_contacts
+      property_not_supported :admin_contacts
+      property_not_supported :technical_contacts
+    end
   end
 end

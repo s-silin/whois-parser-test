@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -28,9 +28,11 @@ module Whois
       property_supported :registrar do
         node("Registrar") do |value|
           Parser::Registrar.new(
-              id:           last_useful_item(node("Registrar IANA ID")),
-              name:         last_useful_item(value),
-              url:          referral_url
+              id:    last_useful_item(node("Registrar IANA ID")),
+              name:  last_useful_item(value),
+              url:   referral_url,
+              email: last_useful_item(node("Registrar Abuse Contact Email")),
+              phone: last_useful_item(node("Registrar Abuse Contact Phone"))
           )
         end
       end

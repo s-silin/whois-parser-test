@@ -8,12 +8,10 @@ describe Whois::Record do
   let(:server) {
     Whois::Server.factory(:tld, ".foo", "whois.example.test")
   }
-  let(:parts) {
-    [
-   Whois::Record::Part.new(body: "This is a record from foo.", host: "foo.example.test"),
-   Whois::Record::Part.new(body: "This is a record from bar.", host: "bar.example.test"),
- ]
-  }
+  let(:parts) {[
+    Whois::Record::Part.new(body: "This is a record from foo.", host: "foo.example.test"),
+    Whois::Record::Part.new(body: "This is a record from bar.", host: "bar.example.test")
+  ]}
 
 
   describe "#respond_to?" do
@@ -197,7 +195,7 @@ describe Whois::Record do
 
       expect {
         described_class.new(nil, []).changed?(described_class.new(nil, []))
-      }.not_to raise_error
+      }.to_not raise_error
     end
   end
 
@@ -209,7 +207,7 @@ describe Whois::Record do
 
       expect {
         described_class.new(nil, []).unchanged?(described_class.new(nil, []))
-      }.not_to raise_error
+      }.to_not raise_error
     end
 
     it "returns true if self and other references the same object" do
@@ -280,15 +278,13 @@ describe Whois::Record do
     context "when a simple method" do
       it "passes the request to super" do
         Object.class_eval do
-          def happy
-            "yes"
-          end
+          def happy; "yes"; end
         end
 
         record = described_class.new(nil, [])
         expect {
           expect(record.happy).to eq("yes")
-        }.not_to raise_error
+        }.to_not raise_error
         expect {
           record.sad
         }.to raise_error(NoMethodError)

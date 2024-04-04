@@ -14,14 +14,14 @@ describe Whois::Parser::Contact do
       expect {
         instance = described_class.new
         expect(instance.id).to be_nil
-      }.not_to raise_error
+      }.to_not raise_error
     end
 
     it "accepts an empty hash" do
       expect {
         instance = described_class.new({})
         expect(instance.id).to be_nil
-      }.not_to raise_error
+      }.to_not raise_error
     end
 
     it "initializes a new instance from given hash" do
@@ -48,3 +48,4 @@ describe Whois::Parser::Contact do
   end
 
 end
+

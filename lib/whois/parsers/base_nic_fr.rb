@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -20,7 +20,7 @@ module Whois
 
       property_supported :status do
         if content_for_scanner =~ /status:\s+(.+)\n/
-          case ::Regexp.last_match(1).downcase
+          case $1.downcase
           when "active"     then :registered
           when "registered" then :registered
           when "redemption" then :redemption
@@ -34,7 +34,7 @@ module Whois
           # This is the case of second level names.
           when "not_open"   then :reserved
           else
-            Whois::Parser.bug!(ParserError, "Unknown status `#{::Regexp.last_match(1)}'.")
+            Whois::Parser.bug!(ParserError, "Unknown status `#{$1}'.")
           end
         else
           :available
@@ -52,21 +52,21 @@ module Whois
 
       property_supported :created_on do
         if content_for_scanner =~ /created:\s+(.+)\n/
-          d, m, y = ::Regexp.last_match(1).split("/")
+          d, m, y = $1.split("/")
           parse_time("#{y}-#{m}-#{d}")
         end
       end
 
       property_supported :updated_on do
         if content_for_scanner =~ /last-update:\s+(.+)\n/
-          d, m, y = ::Regexp.last_match(1).split("/")
+          d, m, y = $1.split("/")
           parse_time("#{y}-#{m}-#{d}")
         end
       end
 
       property_supported :expires_on do
         if content_for_scanner =~ /Expiry Date:\s+(.+)\n/
-          d, m, y = ::Regexp.last_match(1).split("/")
+          d, m, y = $1.split("/")
           parse_time("#{y}-#{m}-#{d}")
         end
       end
@@ -83,12 +83,15 @@ module Whois
         parse_contact("tech-c", Parser::Contact::TYPE_TECHNICAL)
       end
 
+      property_supported :registrar do
+        parse_registrar
+      end
 
       property_supported :nameservers do
         content_for_scanner.scan(/nserver:\s+(.+)\n/).flatten.map do |line|
           if line =~ /(.+) \[(.+)\]/
-            name = ::Regexp.last_match(1)
-            ips  = ::Regexp.last_match(2).split(/\s+/)
+            name = $1
+            ips  = $2.split(/\s+/)
             ipv4 = ips.find { |ip| Whois::Server.send(:valid_ipv4?, ip) }
             ipv6 = ips.find { |ip| Whois::Server.send(:valid_ipv6?, ip) }
             Parser::Nameserver.new(:name => name, :ipv4 => ipv4, :ipv6 => ipv6)
@@ -108,15 +111,15 @@ module Whois
 
       private
 
-      MULTIVALUE_KEYS = %w[address]
+      MULTIVALUE_KEYS = %w( address )
 
       def parse_contact(element, type)
         return unless content_for_scanner =~ /#{element}:\s+(.+)\n/
 
-        id = ::Regexp.last_match(1)
+        id = $1
         content_for_scanner.scan(/nic-hdl:\s+#{id}\n((.+\n)+)\n/).any? ||
             Whois::Parser.bug!(ParserError, "Unable to parse contact block for nic-hdl: #{id}")
-        values = build_hash(::Regexp.last_match(1).scan(/(.+?):\s+(.+?)\n/))
+        values = build_hash($1.scan(/(.+?):\s+(.+?)\n/))
 
         if values["type"] == "ORGANIZATION"
           name = nil
@@ -149,6 +152,18 @@ module Whois
           :fax          => values["fax-no"],
           :email        => values["e-mail"],
           :updated_on   => updated_on,
+        })
+      end
+
+      def parse_registrar
+        content_for_scanner.scan(/\n\n(registrar:\s*.*?)\n\n/m)
+        values = build_hash($1.scan(/(.+?):\s+(.+?)\n/))
+
+        Parser::Registrar.new({
+          name:         values['registrar'],
+          url:          values['website'],
+          email:        values['e-mail'],
+          phone:        values['phone']
         })
       end
 

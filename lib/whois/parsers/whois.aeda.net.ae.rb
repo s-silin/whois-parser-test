@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -25,14 +25,10 @@ module Whois
     class WhoisAedaNetAe < Base
 
       property_supported :status do
-        if content_for_scanner =~ /Status:\s+(.+?)\n/
-          case ::Regexp.last_match(1).downcase
-          when "ok" then :registered
-          else
-            Whois::Parser.bug!(ParserError, "Unknown status `#{::Regexp.last_match(1)}'.")
-          end
-        else
+        if available?
           :available
+        else
+          :registered
         end
       end
 
@@ -58,6 +54,39 @@ module Whois
         end
       end
 
+      property_supported :registrar do
+        Parser::Registrar.new({
+            id:   node("Registrar ID"),
+            name: node("Registrar Name"),
+        })
+      end
+
+      property_supported :registrant_contacts do
+        build_contact('Registrant Contact', Parser::Contact::TYPE_REGISTRANT)
+      end
+
+      property_supported :admin_contacts do
+        build_contact('Admin Contact', Parser::Contact::TYPE_ADMINISTRATIVE)
+      end
+
+      property_supported :technical_contacts do
+        build_contact('Tech Contact', Parser::Contact::TYPE_TECHNICAL)
+      end
+
+      private
+
+      def node(match)
+        content_for_scanner[/#{match}:\s*(.+)\s*$/, 1]
+      end
+
+      def build_contact(element, type)
+        Parser::Contact.new(
+            type:         type,
+            id:           node("#{element} ID"),
+            name:         node("#{element} Name"),
+            email:        node("#{element} Email")
+        )
+      end
     end
 
   end

@@ -3,7 +3,7 @@
 #
 # An intelligent pure Ruby WHOIS client and parser.
 #
-# Copyright (c) 2009-2022 Simone Carletti <weppos@weppos.net>
+# Copyright (c) 2009-2018 Simone Carletti <weppos@weppos.net>
 #++
 
 
@@ -31,14 +31,14 @@ module Whois
 
 
       property_supported :domain do
-        node("domain")
+        node("Domain")
       end
 
       property_not_supported :domain_id
 
 
       property_supported :status do
-        case node("ren-status", &:downcase)
+        case node("Renewal status", &:downcase)
         when /^active/
           :registered
         when nil
@@ -48,7 +48,7 @@ module Whois
             :available
           end
         else
-          Whois::Parser.bug!(ParserError, "Unknown status `#{node('status')}'.")
+          Whois::Parser.bug!(ParserError, "Unknown status `#{node("status")}'.")
         end
       end
 
@@ -62,13 +62,13 @@ module Whois
 
 
       property_supported :created_on do
-        node("registration") { |value| parse_time(value) }
+        node("Registration Date") { |value| parse_time(value) }
       end
 
       property_not_supported :updated_on
 
       property_supported :expires_on do
-        node("renewal") { |value| parse_time(value) }
+        node("Renewal Date") { |value| parse_time(value) }
       end
 
 
@@ -86,16 +86,16 @@ module Whois
       end
 
       property_supported :admin_contacts do
-        build_contact("admin-c", Parser::Contact::TYPE_ADMINISTRATIVE)
+        build_contact("Admin-c", Parser::Contact::TYPE_ADMINISTRATIVE)
       end
 
       property_supported :technical_contacts do
-        build_contact("tech-c", Parser::Contact::TYPE_TECHNICAL)
+        build_contact("Rech-c", Parser::Contact::TYPE_TECHNICAL)
       end
 
 
       property_supported :nameservers do
-        Array.wrap(node("nserver")).map do |line|
+        Array.wrap(node("Nserver")).map do |line|
           name, ipv4 = line.split(/\s+/)
           Parser::Nameserver.new(:name => name, :ipv4 => ipv4)
         end
@@ -107,7 +107,6 @@ module Whois
       def build_contact(element, type)
         Array.wrap(node(element)).map do |id|
           next unless (contact = node("field:#{id}"))
-
           Parser::Contact.new(
             :type         => type,
             :id           => id,

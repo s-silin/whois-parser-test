@@ -3,17 +3,9 @@
 This project uses [Semantic Versioning 2.0.0](http://semver.org/).
 
 
-#### Release 2.0.0
-
-- CHANGED: Minimum Ruby version 2.6
-
-- FIXED: Addressed security issues with eval and YAML.load. Thanks Francis Beaudoin
-
-
-#### Release 1.2.0
+#### master
 
 - CHANGED: Updated .ORG parser to the latest response (GH-98, GH-97). [Thanks @talarini]
-- CHANGED: Updated .IO, .AC, .SH, .TM parsers to the latest response.
 - CHANGED: Renamed WhoisDomainKg to WhoisKg (GH-48)
 
 
